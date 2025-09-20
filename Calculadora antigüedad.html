@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calculadora de Antigüedad</title>
+<style>
+  /* Reset y base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    background: #f4f9f0;
+    color: #1b4727;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+    align-items: center;
+  }
+  .container {
+    max-width: 480px;
+    width: 100%;
+    background: #fff;
+    border-radius: 6px;
+    padding: 30px 30px 32px 30px;
+    box-shadow: 0 3px 10px rgba(27, 71, 39, 0.15);
+    display: flex;
+    flex-direction: column;
+  }
+  h1 {
+    margin: 0 0 24px;
+    font-weight: 700;
+    font-size: 1.8rem;
+    text-align: center;
+    color: #007a33;
+    letter-spacing: 1px;
+  }
+  label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+    font-size: 1rem;
+    color: #1b4727;
+  }
+  input[type="date"] {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 1rem;
+    border: 2px solid #9ccc9a;
+    border-radius: 4px;
+    background: #eaf3e9;
+    color: #1b4727;
+    transition: border-color 0.25s ease;
+  }
+  input[type="date"]:focus {
+    border-color: #007a33;
+    outline: none;
+    background: #e1f0d9;
+  }
+  .buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    cursor: pointer;
+    background-color: #007a33;
+    border: none;
+    color: white;
+    padding: 12px 22px;
+    font-size: 1rem;
+    border-radius: 4px;
+    transition: background-color 0.25s ease;
+    flex: 1 1 130px;
+  }
+  button:hover {
+    background-color: #005c24;
+  }
+  button:active {
+    background-color: #004119;
+  }
+  .result {
+    margin-top: 28px;
+    background: #d8efce;
+    border-radius: 6px;
+    padding: 18px 20px;
+    font-size: 1.1rem;
+    color: #1b4727;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .subtext {
+    font-size: 0.75rem;
+    margin-top: 8px;
+    color: #555;
+  }
+  .alert-text {
+    color: #b00020;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+  /* Responsive */
+  @media (max-width: 480px) {
+    .container {
+      padding: 20px 16px 24px 16px;
+    }
+    button {
+      flex: 1 1 100%;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="container" role="main" aria-label="Calculadora de antigüedad">
+    <h1>Calculadora de Antigüedad</h1>
+
+    <label for="fechaA">Fecha de antigüedad según censo</label>
+    <input type="date" id="fechaA" aria-required="true" />
+
+    <label for="fechaB" style="margin-top: 16px;">Fecha de entrega de candidatura</label>
+    <input type="date" id="fechaB" aria-required="true" />
+
+    <div class="buttons">
+      <button id="calcularBtn" type="button" aria-label="Calcular diferencia">Calcular</button>
+      <button id="reiniciarBtn" type="button" aria-label="Reiniciar campos y resultado">Reiniciar</button>
+    </div>
+
+    <div id="resultado" class="result" aria-live="polite" style="display:none;">
+      <div id="resultadoText"></div>
+      <div id="subTexto" class="subtext"></div>
+      <div id="alertaTexto" class="alert-text"></div>
+    </div>
+  </main>
+
+<script>
+  (() => {
+    const fechaAInput = document.getElementById('fechaA');
+    const fechaBInput = document.getElementById('fechaB');
+    const calcularBtn = document.getElementById('calcularBtn');
+    const reiniciarBtn = document.getElementById('reiniciarBtn');
+    const resultadoDiv = document.getElementById('resultado');
+    const resultadoText = document.getElementById('resultadoText');
+    const subTexto = document.getElementById('subTexto');
+    const alertaTexto = document.getElementById('alertaTexto');
+
+    function ocultarResultado() {
+      resultadoDiv.style.display = 'none';
+      resultadoText.innerHTML = '';
+      subTexto.textContent = '';
+      alertaTexto.textContent = '';
+    }
+
+    // Calcular diferencia en meses (B - A)
+    function diferenciaMeses(fechaA, fechaB) {
+      const anoA = fechaA.getFullYear();
+      const mesA = fechaA.getMonth();
+      const diaA = fechaA.getDate();
+
+      const anoB = fechaB.getFullYear();
+      const mesB = fechaB.getMonth();
+      const diaB = fechaB.getDate();
+
+      let diff = (anoB - anoA) * 12 + (mesB - mesA);
+
+      if (diaB < diaA) diff--;
+
+      return diff;
+    }
+
+    // Formatear fecha en dd/mm/aaaa
+    function formatearFecha(date) {
+      const d = date.getDate().toString().padStart(2, '0');
+      const m = (date.getMonth() + 1).toString().padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}/${m}/${y}`;
+    }
+
+    function validarFechas() {
+      if (!fechaAInput.value || !fechaBInput.value) {
+        alert('Por favor, rellena ambas fechas.');
+        return false;
+      }
+      const fechaA = new Date(fechaAInput.value);
+      const fechaB = new Date(fechaBInput.value);
+
+      if (fechaB < fechaA) {
+        alert('La fecha de entrega de candidatura no puede ser menor que la fecha de antigüedad según censo.');
+        return false;
+      }
+      return true;
+    }
+
+    function calcular() {
+      ocultarResultado();
+
+      if (!validarFechas()) return;
+
+      const fechaA = new Date(fechaAInput.value);
+      const fechaB = new Date(fechaBInput.value);
+
+      const meses = diferenciaMeses(fechaA, fechaB);
+
+      resultadoText.innerHTML = `La antigüedad es <strong>${meses} mes${meses !== 1 ? 'es' : ''}</strong>.`;
+
+      // Calcular fecha X = fechaB menos 6 meses
+      const fechaX = new Date(fechaB);
+      fechaX.setMonth(fechaX.getMonth() - 6);
+
+      subTexto.textContent = `El candidato/a debe tener una antigüedad anterior a ${formatearFecha(fechaX)}.`;
+
+      if (meses < 6) {
+        alertaTexto.textContent = 'NO PUEDE SER CANDIDATO/A';
+        window.alert('ATENCIÓN: NO PUEDE SER CANDIDATO/A');
+      }
+
+      resultadoDiv.style.display = 'block';
+    }
+
+    function reiniciar() {
+      fechaAInput.value = '';
+      fechaBInput.value = '';
+      ocultarResultado();
+      fechaAInput.focus();
+    }
+
+    calcularBtn.addEventListener('click', calcular);
+    reiniciarBtn.addEventListener('click', reiniciar);
+  })();
+</script>
+</body>
+</html>

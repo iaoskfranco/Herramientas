@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta de Tiendas - Jerarquía y Contactos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+    :root {
+      --verde-fuerte: #059669;
+      --verde-boton: #047857;
+      --verde-fondo: #f4fdf7;
+      --verde-caja: #e7f8ee;
+      --verde-hover: #065f46;
+      --gris-tarjeta: #f6f6f6;
+      --borde-tarjeta: #d1fae5;
+      --gris-oscuro: #555;
+    }
+    html {
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: var(--verde-fondo);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      background: var(--verde-caja);
+      max-width: 500px;
+      margin: 2rem auto;
+      padding: 2.5rem 2rem 2rem 2rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px #0001;
+      width: 100%;
+    }
+    h1 {
+      text-align: center;
+      color: var(--verde-fuerte);
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .busqueda {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .autocomplete {
+      position: relative;
+      width: 100%;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      border: 1.5px solid var(--verde-fuerte);
+      font-size: 1.05rem;
+      outline: none;
+      transition: border 0.2s;
+      background: #fff;
+    }
+    input[type="text"]:focus {
+      border: 2px solid var(--verde-hover);
+    }
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 9;
+      background: #fff;
+      border: 1px solid #d1fae5;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 230px;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px #0002;
+      font-size: 1.02rem;
+    }
+    .autocomplete-item {
+      padding: 0.65rem 1rem;
+      cursor: pointer;
+      color: #047857;
+      border-bottom: 1px solid #e0f2f1;
+    }
+    .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+    .autocomplete-item:hover, .autocomplete-active {
+      background: #bbf7d0;
+    }
+    button {
+      background: var(--verde-fuerte);
+      color: #fff;
+      font-size: 1.12rem;
+      border: none;
+      padding: 0.75rem 1.3rem;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 0.3rem;
+      margin-bottom: 0.7rem;
+      transition: background 0.18s;
+      font-weight: 600;
+    }
+    button:hover {
+      background: var(--verde-hover);
+    }
+    .result {
+      margin-top: 1.3rem;
+      border: none;
+      padding: 0;
+      background: none;
+      box-shadow: none;
+      font-size: 1.05rem;
+      min-height: 60px;
+      word-break: break-word;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    .tarjeta-persona {
+      background: var(--gris-tarjeta);
+      border: 1.5px solid var(--borde-tarjeta);
+      border-radius: 14px;
+      padding: 1.1rem 1rem 0.9rem 1rem;
+      box-shadow: 0 2px 12px #0001;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-bottom: 0.2rem;
+      min-width: 0;
+      position: relative;
+    }
+    .rol-persona {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--verde-fuerte);
+      margin-bottom: 0.3rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .nombre-persona {
+      font-size: 1.07rem;
+      color: #1b3a2f;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      line-height: 1.1;
+      word-break: break-word;
+    }
+    .dato-contacto {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 1.02rem;
+      margin-bottom: 0.15rem;
+      margin-left: 0.13rem;
+      color: var(--gris-oscuro);
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+    .icono-contacto {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.2em;
+      height: 1.2em;
+      color: var(--verde-fuerte);
+      cursor: pointer;
+      transition: color 0.15s;
+      margin-right: 0.04em;
+    }
+    .icono-contacto[aria-disabled="true"] {
+      color: #b7b7b7;
+      cursor: not-allowed;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .no-encontrada {
+      color: #dc2626;
+      font-weight: bold;
+      margin: 1rem 0;
+      text-align: center;
+    }
+    .tarjeta-tienda {
+      background: #fff;
+      border-radius: 14px 14px 0 0;
+      padding: 0.8rem 1rem 0.4rem 1rem;
+      box-shadow: 0 2px 12px #0001;
+      margin-bottom: 0.3rem;
+      font-size: 1.11rem;
+      font-weight: 700;
+      color: var(--verde-fuerte);
+      letter-spacing: 0.04em;
+      border: 1.5px solid var(--borde-tarjeta);
+      border-bottom: none;
+      text-align: left;
+    }
+    @media (max-width: 600px) {
+      .container {
+        max-width: 100vw;
+        padding: 1.2rem 0.5rem 1rem 0.5rem;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      .result {
+        font-size: 0.98rem;
+      }
+      .tarjeta-persona {
+        padding: 0.85rem 0.65rem 0.7rem 0.65rem;
+      }
+      .tarjeta-tienda {
+        padding: 0.7rem 0.65rem 0.35rem 0.65rem;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Consulta de Tiendas</h1>
+    <div class="busqueda">
+      <div class="autocomplete">
+        <input type="text" id="busqueda" placeholder="Busca o selecciona una tienda..." autocomplete="off" oninput="autocompletarTienda()" onclick="autocompletarTienda()">
+        <div id="autocomplete-list" class="autocomplete-list"></div>
+      </div>
+      <button onclick="buscarTienda()">Buscar</button>
+    </div>
+    <div id="resultado" class="result"></div>
+  </div>
+  <script>
+    // ======== *** ATENCIÓN: AQUÍ PEGAR DATOS DE TIENDAS (INICIO) *** ========
+    const datosTiendas = [
+
+{"tienda":"A Coruña","liberado":"Javier Crespo","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Adeje","liberado":"(L Tenerife)","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Albacete","liberado":"Laura Domínguez","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Alboraya","liberado":"Enrique Almazán","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Alcalá de Henares","liberado":"(L Madrid)","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Alcobendas","liberado":"Isidora Mateos","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Alcorcon ","liberado":"Juan Diego Vázquez","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Aldaia","liberado":"Néstor Muñoz","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Alicante","liberado":"Juan Antonio Rodríguez","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Almería","liberado":"Iulia Bologh","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Aranjuez ","liberado":"Juan Diego Vázquez","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Artea","liberado":"(L Euskadi)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Ávila","liberado":"Julián González","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Badajoz","liberado":"(L Extremadura)","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Badalona","liberado":"Juan José Rovira","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Barakaldo","liberado":"(L Euskadi)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Bilbondo","liberado":"(L Euskadi)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Burjassot","liberado":"Enrique Almazán","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Cabrera","liberado":"Juan José Rovira","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Cáceres","liberado":"(L Extremadura)","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Calpe","liberado":"Antonio Tudela","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Cartagena","liberado":"Luis Carvajal","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Castellón","liberado":"Enrique Almazán","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Ciudad Real","liberado":"Laura Domínguez","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Cocentaina","liberado":"Antonio Tudela","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Colmenar","liberado":"Isidora Mateos","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Conde Salvatierra","liberado":"Néstor Muñoz","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Córdoba","liberado":"Luis Sánchez","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Cuenca","liberado":"Isidora Mateos","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Dos Hermanas","liberado":"SIN LIBERADO","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Durango","liberado":"(L Euskadi)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Elche","liberado":"Diego Gallego","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Ferrol","liberado":"Javier Crespo","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Figueres","liberado":"Patricia Cordero","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Finestrat","liberado":"Luis Carvajal","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Gandía","liberado":"Ana Alcoy","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Getafe","liberado":"Laura Domínguez","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Gijón","liberado":"Eliazar Suárez","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Girona","liberado":"Patricia Cordero","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Granada","liberado":"Julia Anquela","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Guadalajara","liberado":"(L Madrid)","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Huelva","liberado":"Bernardina Palacios","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Jaén","liberado":"Julia Anquela","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Jerez","liberado":"Luis Sánchez","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"La Laguna","liberado":"(L Tenerife)","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"La Maquinista","liberado":"Ester Ríos","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"La Plataforma Getafe","liberado":"Juan Diego Vázquez","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"La Pobla","liberado":"Enrique Almazán","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"La Zenia ","liberado":"Diego Gallego","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Las Rozas","liberado":"Encarnación Bustos","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Leganés","liberado":"Encarnación Bustos","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"León","liberado":"Roberto Diéguez","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Lepe","liberado":"Bernardina Palacios","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Lliça D´Amunt","liberado":"Tony Salvato","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Logroño","liberado":"(LTP Logroño)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"López de Hoyos ","liberado":"Alfonso Roldán","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Lorca","liberado":"Luis Carvajal","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Los Barrios","liberado":"Luis Sánchez","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Lugo","liberado":"Javier Crespo","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Madrid A2","liberado":"Juan Diego Vázquez","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Majadahonda","liberado":"Alfonso Roldán","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Málaga","liberado":"Alberto Díaz","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Manresa","liberado":"Ester Ríos","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Marbella","liberado":"Alberto Díaz","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Massanassa","liberado":"Ana Alcoy","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Melilla","liberado":"Alberto Díaz","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Mérida","liberado":"(L Extremadura)","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Mijas","liberado":"Alberto Díaz","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Mos","liberado":"Beatriz Martínez","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Motril","liberado":"Iulia Bologh","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Murcia Condomina","liberado":"Luis Carvajal","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Murcia Sur","liberado":"Luis Carvajal","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Nigrán","liberado":"Beatriz Martínez","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Nuevos Ministerios ","liberado":"Alfonso Roldán","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Oiartzun","liberado":"(L Euskadi)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Oleiros","liberado":"Javier Crespo","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Ondara","liberado":"Antonio Tudela","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Orotava","liberado":"(L Tenerife)","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Ourense","liberado":"Beatriz Martínez","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Oviedo","liberado":"Eliazar Suárez","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Palencia","liberado":"Julián González","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Palma Ciudad","liberado":"(LTP Baleares)","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Palma Marratxí","liberado":"(LTP Baleares)","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Pamplona","liberado":"(LTP Logroño)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Plasencia","liberado":"(L Extremadura)","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Playa de Aro","liberado":"Patricia Cordero","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Ponferrada","liberado":"Roberto Diéguez","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Pontevedra","liberado":"Beatriz Martínez","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Proyect Gijón","liberado":"Eliazar Suárez","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Puerto Real","liberado":"Luis Sánchez","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Puerto Venecia","liberado":"SIN LIBERADO","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Region Centro, SSII, Tienda Internet","liberado":"SIN LIBERADO","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Region Islas (centralizacion)","liberado":"Yazmina Betancor","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Región Levante","liberado":"Ana Alcoy","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Region Suroeste (centralizacion)","liberado":"SIN LIBERADO","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Rivas","liberado":"Juan Diego Vázquez","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Roda de Bara","liberado":"SIN LIBERADO","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Roquetas","liberado":"Iulia Bologh","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Sabadell","liberado":"Juan José Rovira","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Sagunto","liberado":"Enrique Almazán","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Salamanca","liberado":"Roberto Diéguez","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"San Juan de Alicante","liberado":"Juan Antonio Rodríguez","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"San Pedro del Pinatar","liberado":"Diego Gallego","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"San Sebastián","liberado":"Isidora Mateos","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Sant Boi","liberado":"Ester Ríos","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Sant Cugat","liberado":"Juan José Rovira","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Santander","liberado":"Eliazar Suárez","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Santiago","liberado":"Javier Crespo","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Sevilla Alcalá","liberado":"SIN LIBERADO","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Sevilla Tomares","liberado":"SIN LIBERADO","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Soria","liberado":"Julián González","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Talavera","liberado":"Encarnación Bustos","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Tamaraceite","liberado":"Yazmina Betancor","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Tarragona","liberado":"Tony Salvato","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Telde","liberado":"Yazmina Betancor","coordinador":"Óscar Franco","estatal":"Eugenia Martínez"},
+{"tienda":"Toledo","liberado":"Encarnación Bustos","coordinador":"Mercedes Izquierdo","estatal":"Eugenia Martínez"},
+{"tienda":"Torrelavega","liberado":"Eliazar Suárez","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Torrevieja","liberado":"Antonio Tudela","coordinador":"Ana Bonet","estatal":"Rubén García"},
+{"tienda":"Tortosa","liberado":"Tony Salvato","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Tudela","liberado":"(LTP Logroño)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Urban BCN","liberado":"Ester Ríos","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Utebo","liberado":"SIN LIBERADO","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Valdepeñas","liberado":"Laura Domínguez","coordinador":"Pilar Vivar","estatal":"Eugenia Martínez"},
+{"tienda":"Valladolid","liberado":"Julián González","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"},
+{"tienda":"Vic","liberado":"Tony Salvato","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Vigo","liberado":"Beatriz Martínez","coordinador":"SIN COORDINADOR","estatal":"Rubén García"},
+{"tienda":"Vilanova","liberado":"Tony Salvato","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Villanueva","liberado":"(L Extremadura)","coordinador":"Ana Belén Pérez","estatal":"Eugenia Martínez"},
+{"tienda":"Vinarós","liberado":"Tony Salvato","coordinador":"Jaume Bassegoda","estatal":"Rubén García"},
+{"tienda":"Vitoria","liberado":"(L Euskadi)","coordinador":"Miguel Ángel Vinués","estatal":"Rubén García"},
+{"tienda":"Xativa","liberado":"Ana Alcoy","coordinador":"Ramón Nieto","estatal":"Rubén García"},
+{"tienda":"Zamora","liberado":"Julián González","coordinador":"Miguel Ángel Salas","estatal":"Eugenia Martínez"}
+
+
+];
+
+
+
+
+
+
+    // ======== *** ATENCIÓN: AQUÍ PEGAR DATOS DE TIENDAS (FIN) *** ========
+
+    // ======== *** ATENCIÓN: AQUÍ PEGAR DATOS DE CONTACTOS (INICIO) *** ========
+   
+const datosContactos = [
+  
+{"nombre":"Rubén García","email":"rubengarcia@fetico.es","telefono":"608598129"},
+{"nombre":"Eugenia Martínez","email":"eugeniamartinez@fetico.es","telefono":"647355130"},
+{"nombre":"Jaume Bassegoda","email":"jaumebassegoda@fetico.es","telefono":"655816589"},
+{"nombre":"Ana Bonet","email":"anabonet@fetico.es","telefono":"645250545"},
+{"nombre":"Ramón Nieto","email":"ramonnieto@fetico.es","telefono":"658374750"},
+{"nombre":"Coordinador/a","email":"SIN CORREO","telefono":"SIN TLF"},
+{"nombre":"Miguel Ángel Vinués","email":"miguelangelvinues@fetico.es","telefono":"692338228"},
+{"nombre":"Óscar Franco","email":"oscarfranco@fetico.es","telefono":"657914691"},
+{"nombre":"Ana Belén Pérez","email":"anabelenperez@fetico.es","telefono":"665818424"},
+{"nombre":"Pilar Vivar","email":"pilarvivar@fetico.es","telefono":"655427617"},
+{"nombre":"Mercedes Izquierdo","email":"mercedesizquierdo@fetico.es","telefono":"656490076"},
+{"nombre":"Miguel Ángel Salas","email":"miguelangelsalas@fetico.es","telefono":"654506043"},
+{"nombre":"Tony Salvato","email":"antoniosalvato@fetico.es","telefono":"625469687"},
+{"nombre":"Juan José Rovira","email":"juanjoserovira@fetico.es","telefono":"635308168"},
+{"nombre":"Ester Ríos","email":"estherrios@fetico.es","telefono":"655829861"},
+{"nombre":"Patricia Cordero","email":"patriciacordero@fetico.es","telefono":"635308171"},
+{"nombre":"Diego Gallego","email":"diegogallego@fetico.es","telefono":"655139042"},
+{"nombre":"Luis Carvajal","email":"luiscarvajal@fetico.es","telefono":"658372929"},
+{"nombre":"Antonio Tudela","email":"antoniotudela@fetico.es","telefono":"SIN TLF"},
+{"nombre":"Juan Antonio Rodríguez","email":"juanantoniorodriguez@fetico.es","telefono":"635308155"},
+{"nombre":"Enrique Almazán","email":"enriquealmazan@fetico.es","telefono":"635308186"},
+{"nombre":"Néstor Muñoz","email":"nestormunoz@fetico.es","telefono":"646076007"},
+{"nombre":"Ana Alcoy","email":"SIN CORREO","telefono":"SIN TLF"},
+{"nombre":"(LTP Baleares)","email":"SIN CORREO","telefono":"SIN TLF"},
+{"nombre":"Javier Crespo","email":"franciscocrespo@fetico.es","telefono":"658548984"},
+{"nombre":"Beatriz Martínez","email":"beatrizmartinez@fetico.es","telefono":"645419376"},
+{"nombre":"(L Euskadi)","email":"SIN CORREO","telefono":"SIN TLF"},
+{"nombre":"(LTP Logroño)","email":"SIN CORREO","telefono":"SIN TLF"},
+{"nombre":"Yazmina Betancor","email":"yazminabetancor@fetico.es","telefono":"685949952"},
+{"nombre":"(L Tenerife)","email":"SIN CORREO","telefono":"SIN TLF"},
+{"nombre":"Alberto Díaz","email":"albertodiaz@fetico.es","telefono":"658372972"},
+{"nombre":"Iulia Bologh","email":"iuliabologh@fetico.es","telefono":"695334010"},
+{"nombre":"Julia Anquela","email":"juliaanquela@fetico.es","telefono":"695333910"},
+{"nombre":"Luis Sánchez","email":"luissanchez@fetico.es","telefono":"635116958"},
+{"nombre":"Bernardina Palacios","email":"bernardinapalacios@fetico.es","telefono":"695334112"},
+{"nombre":"(L Extremadura)","email":"SIN CORREO","telefono":"SIN TLF"},
+{"nombre":"Isidora Mateos","email":"isidoramateo@fetico.es","telefono":"658372858"},
+{"nombre":"Laura Domínguez","email":"lauradominguez@fetico.es","telefono":"635308219"},
+{"nombre":"(L Madrid)","email":"SIN CORREO","telefono":"SIN TLF"},
+{"nombre":"Encarnación Bustos","email":"encarnacionbustos@fetico.es","telefono":"685949954"},
+{"nombre":"Alfonso Roldán","email":"alfonsoroldan@fetico.es","telefono":"695334046"},
+{"nombre":"Juan Diego Vázquez","email":"juandiegovazquez@fetico.es","telefono":"695334061"},
+{"nombre":"Julián González","email":"juliangonzalez@fetico.es","telefono":"658748364"},
+{"nombre":"Roberto Diéguez","email":"robertodieguez@fetico.es","telefono":"635308208"},
+{"nombre":"Eliazar Suárez","email":"eliazarsuarez@fetico.es","telefono":"658549494"}
+
+
+
+
+];
+
+
+
+
+    // ======== *** ATENCIÓN: AQUÍ PEGAR DATOS DE CONTACTOS (FIN) *** ========
+
+// --- AUTOCOMPLETAR ---
+    function autocompletarTienda() {
+      const input = document.getElementById('busqueda');
+      const val = input.value.toLowerCase();
+      const lista = document.getElementById('autocomplete-list');
+      lista.innerHTML = '';
+      let sugerencias;
+      if (!val) {
+        sugerencias = datosTiendas.map(d => d.tienda).slice(0,8);
+      } else {
+        sugerencias = datosTiendas
+          .map(d => d.tienda)
+          .filter(t => t.toLowerCase().includes(val))
+          .slice(0,8);
+      }
+      if(sugerencias.length === 0) {
+        lista.innerHTML = '<div class="autocomplete-item" style="color:#aaa;cursor:default">No hay coincidencias</div>';
+        return;
+      }
+      sugerencias.forEach(tienda => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.textContent = tienda;
+        item.onclick = function() {
+          input.value = tienda;
+          lista.innerHTML = '';
+        };
+        lista.appendChild(item);
+      });
+    }
+    // Cierra la lista si haces click fuera
+    document.addEventListener('click', function(e){
+      if (!e.target.closest('.autocomplete')) {
+        document.getElementById('autocomplete-list').innerHTML = '';
+      }
+    });
+
+    // --- BÚSQUEDA Y JERARQUÍA ---
+    function buscarTienda() {
+      const tiendaInput = document.getElementById('busqueda').value.trim().toLowerCase();
+      const resultadoDiv = document.getElementById('resultado');
+      resultadoDiv.innerHTML = '';
+      if (!tiendaInput) {
+        resultadoDiv.innerHTML = '<span class="no-encontrada">Por favor, escribe o selecciona el nombre de la tienda.</span>';
+        return;
+      }
+      const entrada = datosTiendas.find(
+        t => t.tienda.trim().toLowerCase() === tiendaInput
+      );
+      if (!entrada) {
+        resultadoDiv.innerHTML = '<span class="no-encontrada">No se encontró la tienda indicada.</span>';
+        return;
+      }
+      function getContacto(nombre) {
+        nombre = nombre.trim().toLowerCase();
+        return datosContactos.find(c => c.nombre.trim().toLowerCase() === nombre) || {};
+      }
+      const estatal = getContacto(entrada.estatal);
+      const coordinador = getContacto(entrada.coordinador);
+      const liberado = getContacto(entrada.liberado);
+
+      resultadoDiv.innerHTML = `
+        <div class="tarjeta-tienda">
+          <span>Tienda:</span> ${entrada.tienda}
+        </div>
+        <div class="tarjeta-persona">
+          <div class="rol-persona">LIBERADO/A</div>
+          <div class="nombre-persona">${entrada.liberado}</div>
+          <div class="dato-contacto">
+            <span>Tel:</span>
+            ${liberado.telefono ? `<a class="icono-contacto" href="tel:${liberado.telefono}" title="Llamar">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><path d="M6.7 4.3a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-.7.7c.6 1.4 1.8 3 3.2 4.4s3 2.6 4.4 3.2l.7-.7a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-1 1A4 4 0 0 1 16 21a17 17 0 0 1-13-13c0-1.1.4-2.1 1.2-2.8l1-1z"/></svg>
+            </a> <span>${liberado.telefono}</span>` : `<span class="icono-contacto" aria-disabled="true" title="Sin teléfono">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ccc" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><path d="M6.7 4.3a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-.7.7c.6 1.4 1.8 3 3.2 4.4s3 2.6 4.4 3.2l.7-.7a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-1 1A4 4 0 0 1 16 21a17 17 0 0 1-13-13c0-1.1.4-2.1 1.2-2.8l1-1z"/></svg>
+            </span> <span>Sin teléfono</span>`}
+          </div>
+          <div class="dato-contacto">
+            <span>Correo:</span>
+            ${liberado.email ? `<a class="icono-contacto" href="mailto:${liberado.email}" title="Enviar correo">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </a> <span>${liberado.email}</span>` : `<span class="icono-contacto" aria-disabled="true" title="Sin correo">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ccc" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </span> <span>Sin correo</span>`}
+          </div>
+        </div>
+        <div class="tarjeta-persona">
+          <div class="rol-persona">COORDINADOR/A</div>
+          <div class="nombre-persona">${entrada.coordinador}</div>
+          <div class="dato-contacto">
+            <span>Tel:</span>
+            ${coordinador.telefono ? `<a class="icono-contacto" href="tel:${coordinador.telefono}" title="Llamar">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><path d="M6.7 4.3a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-.7.7c.6 1.4 1.8 3 3.2 4.4s3 2.6 4.4 3.2l.7-.7a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-1 1A4 4 0 0 1 16 21a17 17 0 0 1-13-13c0-1.1.4-2.1 1.2-2.8l1-1z"/></svg>
+            </a> <span>${coordinador.telefono}</span>` : `<span class="icono-contacto" aria-disabled="true" title="Sin teléfono">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ccc" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><path d="M6.7 4.3a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-.7.7c.6 1.4 1.8 3 3.2 4.4s3 2.6 4.4 3.2l.7-.7a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-1 1A4 4 0 0 1 16 21a17 17 0 0 1-13-13c0-1.1.4-2.1 1.2-2.8l1-1z"/></svg>
+            </span> <span>Sin teléfono</span>`}
+          </div>
+          <div class="dato-contacto">
+            <span>Correo:</span>
+            ${coordinador.email ? `<a class="icono-contacto" href="mailto:${coordinador.email}" title="Enviar correo">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </a> <span>${coordinador.email}</span>` : `<span class="icono-contacto" aria-disabled="true" title="Sin correo">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ccc" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </span> <span>Sin correo</span>`}
+          </div>
+        </div>
+        <div class="tarjeta-persona">
+          <div class="rol-persona">ESTATAL</div>
+          <div class="nombre-persona">${entrada.estatal}</div>
+          <div class="dato-contacto">
+            <span>Tel:</span>
+            ${estatal.telefono ? `<a class="icono-contacto" href="tel:${estatal.telefono}" title="Llamar">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><path d="M6.7 4.3a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-.7.7c.6 1.4 1.8 3 3.2 4.4s3 2.6 4.4 3.2l.7-.7a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-1 1A4 4 0 0 1 16 21a17 17 0 0 1-13-13c0-1.1.4-2.1 1.2-2.8l1-1z"/></svg>
+            </a> <span>${estatal.telefono}</span>` : `<span class="icono-contacto" aria-disabled="true" title="Sin teléfono">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ccc" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><path d="M6.7 4.3a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-.7.7c.6 1.4 1.8 3 3.2 4.4s3 2.6 4.4 3.2l.7-.7a2 2 0 0 1 2.8 0l1.3 1.3a2 2 0 0 1 0 2.8l-1 1A4 4 0 0 1 16 21a17 17 0 0 1-13-13c0-1.1.4-2.1 1.2-2.8l1-1z"/></svg>
+            </span> <span>Sin teléfono</span>`}
+          </div>
+          <div class="dato-contacto">
+            <span>Correo:</span>
+            ${estatal.email ? `<a class="icono-contacto" href="mailto:${estatal.email}" title="Enviar correo">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </a> <span>${estatal.email}</span>` : `<span class="icono-contacto" aria-disabled="true" title="Sin correo">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ccc" stroke-width="2" width="20" height="20" viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </span> <span>Sin correo</span>`}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Inicialización para mostrar sugerencias al enfocar input
+    document.getElementById('busqueda').addEventListener('focus', autocompletarTienda);
+  </script>
+</body>
+</html>

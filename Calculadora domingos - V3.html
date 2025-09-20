@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cálculo de domingos y festivos a trabajar</title>
+<style>
+  /* Reset y base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    background: #fff;
+    color: #1b4727; /* verde oscuro similar Fetico */
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    max-width: 480px;
+    width: 100%;
+    background: #f4f9f0; /* verde muy suave */
+    border-radius: 6px;
+    padding: 24px 30px 32px 30px;
+    box-shadow: 0 3px 10px rgba(27, 71, 39, 0.15);
+    display: flex;
+    flex-direction: column;
+  }
+  h1 {
+    margin: 0 0 24px;
+    font-weight: 700;
+    font-size: 1.8rem;
+    text-align: center;
+    color: #007a33; /* verde Fetico más vivo */
+    letter-spacing: 1px;
+  }
+
+  label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+    font-size: 1rem;
+    color: #1b4727;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 1rem;
+    border: 2px solid #9ccc9a; /* verde suave */
+    border-radius: 4px;
+    transition: border-color 0.25s ease;
+    background: #eaf3e9;
+    color: #1b4727;
+  }
+  input[type="number"]:focus {
+    border-color: #007a33;
+    outline: none;
+    background: #e1f0d9;
+  }
+
+  .checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    gap: 8px;
+    font-size: 1rem;
+    color: #1b4727;
+    user-select: none;
+  }
+  .checkbox-container input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    cursor: pointer;
+    background-color: #007a33;
+    border: none;
+    color: white;
+    padding: 12px 22px;
+    font-size: 1rem;
+    border-radius: 4px;
+    transition: background-color 0.25s ease;
+    flex: 1 1 130px;
+  }
+  button:hover {
+    background-color: #005c24;
+  }
+  button:active {
+    background-color: #004119;
+  }
+
+  .result {
+    margin-top: 28px;
+    background: #d8efce; /* verde muy suave para fondo resultado */
+    border-radius: 6px;
+    padding: 18px 20px;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #1b4727;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .result strong {
+    color: #005c24;
+  }
+  .result-line {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+  }
+
+  .result-line span:last-child {
+    font-size: 1rem;
+  }
+
+  /* Texto explicativo */
+  .explanation {
+    margin-top: 18px;
+    font-size: 0.9rem;
+    color: #3a6e3c;
+    background: #e5f2d8; /* verde muy suave */
+    padding: 14px 16px;
+    border-radius: 6px;
+    border-left: 4px solid #007a33;
+    line-height: 1.4;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .container {
+      padding: 20px 16px 24px 16px;
+    }
+    button {
+      flex: 1 1 100%;
+    }
+    .result-line {
+      flex-direction: column;
+      gap: 6px;
+    }
+    /* Números más grandes y centrados en móvil */
+    .result-line span:last-child {
+      font-size: 1.3rem;
+      text-align: center;
+      font-weight: 700;
+      display: block;
+      margin-top: 4px;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="container" role="main" aria-label="Aplicación para calcular domingos y festivos a trabajar">
+    <h1>Cálculo de domingos y festivos a trabajar</h1>
+
+    <label for="totalDaysInput">Número total de domingos y/o festivos permitidos para abrir la tienda</label>
+    <input
+      id="totalDaysInput"
+      type="number"
+      min="0"
+      step="1"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      placeholder="Ejemplo: 20"
+      aria-describedby="inputHelp"
+      autocomplete="off"
+    />
+    <div id="inputHelp" style="font-size: 0.85rem; color: #5a8059; margin-top: 4px;">
+      Introduce solo números enteros positivos.
+    </div>
+
+    <label class="checkbox-container" for="generalizedOpening">
+      <input type="checkbox" id="generalizedOpening" />
+      Apertura comercial generalizada
+    </label>
+
+    <div class="buttons">
+      <button id="calculateBtn" type="button" aria-label="Calcular domingos y festivos">Calcular</button>
+      <button id="resetBtn" type="button" aria-label="Reiniciar la aplicación">Reiniciar</button>
+    </div>
+
+    <section id="resultSection" class="result" aria-live="polite" style="display:none;"></section>
+    <section id="explanationSection" class="explanation" style="display:none;"></section>
+  </main>
+
+<script>
+  (() => {
+    const totalDaysInput = document.getElementById('totalDaysInput');
+    const generalizedCheckbox = document.getElementById('generalizedOpening');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultSection = document.getElementById('resultSection');
+    const explanationSection = document.getElementById('explanationSection');
+
+    function roundMath(num) {
+      return Math.round(num);
+    }
+
+    function clearResults() {
+      resultSection.innerHTML = '';
+      explanationSection.innerHTML = '';
+      resultSection.style.display = 'none';
+      explanationSection.style.display = 'none';
+    }
+
+    function calcular() {
+      clearResults();
+
+      const isGeneralized = generalizedCheckbox.checked;
+
+      if (isGeneralized) {
+        // Mostrar resultados fijos para apertura generalizada
+        resultSection.style.display = 'flex';
+        explanationSection.style.display = 'block';
+
+        resultSection.innerHTML = `
+          <div class="result-line">
+            <span>Número total de domingos y festivos permitidos para abrir la tienda:</span>
+            <span><strong>Apertura generalizada</strong></span>
+          </div>
+          <div class="result-line">
+            <span>Máximo total permitido de festivos y domingos:</span>
+            <span><strong>16</strong></span>
+          </div>
+          <div class="result-line">
+            <span>Máximo número de domingos dentro de ese total:</span>
+            <span><strong>10</strong></span>
+          </div>
+        `;
+
+        explanationSection.innerHTML = `
+          <p>Al estar marcada la opción "Apertura comercial generalizada", se aplican estos valores fijos.</p>
+        `;
+
+        return;
+      }
+
+      // No marcado: calculamos con valor introducido
+      let totalInput = totalDaysInput.value.trim();
+
+      if (totalInput === '') {
+        alert('Por favor, rellena el campo con un número.');
+        totalDaysInput.focus();
+        return;
+      }
+
+      if (!/^\d+$/.test(totalInput)) {
+        alert('El valor ingresado debe ser un número entero positivo.');
+        totalDaysInput.focus();
+        return;
+      }
+
+      let totalAbrir = Number(totalInput);
+
+      // Aplicar % según reglas al totalAbrir para obtener máximo total permitido de festivos y domingos
+      let maxTotalPermitido;
+      if (totalAbrir <= 15) {
+        maxTotalPermitido = roundMath(totalAbrir * 0.44);
+      } else if (totalAbrir <= 25) {
+        maxTotalPermitido = roundMath(totalAbrir * 0.30);
+      } else {
+        maxTotalPermitido = Math.max(roundMath(totalAbrir * 0.21), 8);
+      }
+
+      // Máximo número de domingos dentro del máximo total permitido (65%)
+      const maxDomingos = roundMath(maxTotalPermitido * 0.65);
+
+      resultSection.style.display = 'flex';
+      explanationSection.style.display = 'block';
+
+      resultSection.innerHTML = `
+        <div class="result-line">
+          <span>Número total de domingos y festivos permitidos para abrir la tienda:</span>
+          <span><strong>${totalAbrir}</strong></span>
+        </div>
+        <div class="result-line">
+          <span>Máximo total permitido de festivos y domingos:</span>
+          <span><strong>${maxTotalPermitido}</strong></span>
+        </div>
+        <div class="result-line">
+          <span>Máximo número de domingos dentro de ese total:</span>
+          <span><strong>${maxDomingos}</strong></span>
+        </div>
+      `;
+
+      explanationSection.innerHTML = `
+        <p>Para calcular el máximo total permitido de festivos y domingos, se aplicaron estos porcentajes según el número total de días a abrir:</p>
+        <ul>
+          <li>Hasta 15 días: 44%</li>
+          <li>De 16 a 25 días: 30%</li>
+          <li>Más de 25 días: 21% (con un mínimo de 8 días)</li>
+        </ul>
+        <p>Finalmente, el máximo número de domingos se calcula como el 65% del máximo total permitido, redondeado matemáticamente.</p>
+      `;
+    }
+
+    function reiniciar() {
+      totalDaysInput.value = '';
+      generalizedCheckbox.checked = false;
+      clearResults();
+      totalDaysInput.focus();
+    }
+
+    calculateBtn.addEventListener('click', calcular);
+    resetBtn.addEventListener('click', reiniciar);
+
+    totalDaysInput.addEventListener('input', () => {
+      totalDaysInput.value = totalDaysInput.value.replace(/[^\d]/g, '');
+    });
+  })();
+</script>
+</body>
+</html>
